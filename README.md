@@ -18,17 +18,17 @@ The objective is to make ticket handling more consistent, efficient, and reliabl
 
 The requirements are derived from the needs of the people responsible for handling and managing escalated support tickets.
 
-Consistent categorisation: Support staff need to understand what each ticket concerns without having to interpret and categorise every query manually.
+* Consistent categorisation: Support staff need to understand what each ticket concerns without having to interpret and categorise every query manually.
 
-Reliable prioritisation: Support staff need to identify which tickets require attention first, particularly when several tickets are awaiting resolution.
+* Reliable prioritisation: Support staff need to identify which tickets require attention first, particularly when several tickets are awaiting resolution.
 
-Appropriate routing: Tickets need to reach the relevant team or queue to reduce unnecessary reassignment.
+* Appropriate routing: Tickets need to reach the relevant team or queue to reduce unnecessary reassignment.
 
-Human oversight: Support staff need to review uncertain classifications rather than rely on potentially incorrect automated predictions.
+* Human oversight: Support staff need to review uncertain classifications rather than rely on potentially incorrect automated predictions.
 
-Traceability: Support staff need to understand how a ticket was categorised and prioritised so that decisions can be reviewed and corrected.
+* Traceability: Support staff need to understand how a ticket was categorised and prioritised so that decisions can be reviewed and corrected.
 
-Integration: Developers need to connect the triage service to an existing support assistant without coupling the classification logic to the assistant's internal implementation.
+* Integration: Developers need to connect the triage service to an existing support assistant without coupling the classification logic to the assistant's internal implementation.
 
 
 ### Defining the functional requirements
@@ -56,11 +56,61 @@ Functional requirements describe what the service must do.
 
 ### Defining the non functional requirements
 
+Non-functional requirements describe the quality attributes and operational constraints of the service.
+
+* Reliability: The service should process valid tickets consistently and avoid silently dropping requests.
+
+* Performance: Classification should complete within a defined latency target suitable for the ticket-handling workflow.
+
+* Maintainability: Classification logic, routing rules, and API concerns should be separated so that each can be modified and tested independently.
+
+* Scalability: The service should be designed so that processing capacity can be increased as ticket volume grows.
+
+* Security: Ticket data should be protected in transit and at rest where applicable, with appropriate authentication and access controls.
+
+* Privacy: The service should process only the information needed for triage and avoid unnecessarily retaining sensitive information.
+
+* Testability: Classification, prioritisation, routing, and uncertainty handling should be independently testable.
+
+* Observability: Operational logs and metrics should make failures, processing delays, and routing outcomes measurable without unnecessarily exposing sensitive ticket content.
+
+Specific targets for latency, availability, classification performance, and retention will be defined and justified during implementation.
 
 ### Defining the scope 
 
+Desktriage is intended to handle the triage stage after escalation, not the original conversation or final resolution of the user's issue.
 
-### Defining the Acceptance criteria
+
+### Defining the acceptance criteria
+
+The following criteria describe how the service's behaviour and quality will be evaluated.
+
+* A valid ticket can be submitted through the defined API and receives a structured response.
+
+* Invalid ticket data is rejected with an appropriate error response.
+
+* Valid tickets receive a category from the predefined category set.
+
+* Valid tickets receive a priority according to the defined priority policy.
+
+* Tickets below the configured confidence threshold are sent for human review rather than automatically routed.
+
+* Tickets meeting the automatic routing criteria are assigned to the destination specified by the routing rules.
+
+* Each triage decision can be traced through its recorded outcome.
+
+* Automated tests cover successful classification, invalid inputs, routing decisions, and uncertain predictions.
+
+* Evaluation results report category level precision, recall, and F1-score, alongside priority-classification performance.
+
+* Urgent ticket recall and the human review rate are measured on an appropriate evaluation dataset.
+
+* API latency is measured against a documented performance target.
+
+Classification thresholds and performance targets will be established using evaluation data rather than chosen solely to make the system appear successful.
+
+
+## The dataset
 
 
 
