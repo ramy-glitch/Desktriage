@@ -101,7 +101,7 @@ The following criteria describe how the service's behaviour and quality will be 
 
 * Automated tests cover successful classification, invalid inputs, routing decisions, and uncertain predictions.
 
-* Evaluation results report category level precision, recall, and F1-score, alongside priority-classification performance.
+* Evaluation results report category level precision, recall, and F1-score, alongside priority classification performance.
 
 * Urgent ticket recall and the human review rate are measured on an appropriate evaluation dataset.
 
@@ -112,7 +112,17 @@ Classification thresholds and performance targets will be established using eval
 
 ## The dataset
 
+Desktriage uses a labelled dataset of synthetic support tickets to develop and evaluate its classification and prioritisation pipeline. Details are in the [dataset card](dataset/desktriage_dataset_card.md). I used the priority definitions in the Cabinet Office [Technical incident management guidance](https://digital-handbook.cabinetoffice.gov.uk/docs/software/technical-incident-management-guidance.html).
 
+Each record represents a query escalated by an AI-powered healthcare-policy assistant because it could not be resolved confidently or safely. The dataset contains fictional user queries covering supported healthcare-policy domains, different reasons for escalation, varying levels of operational priority, and examples requiring human review.
+
+The dataset is designed to support supervised learning for ticket categorisation and experiments with priority assessment, confidence-based routing, and human escalation.
+
+Each ticket is associated with a unique ticket_id and a pseudonymous user_id. These identifiers allow individual tickets to be tracked and multiple tickets from the same fictional user to be represented without including real personal identifiers.
+
+The category and priority labels serve as ground-truth targets for training and evaluation. The dataset will also include ambiguous, out-of-scope, and insufficient-context examples to test the system's ability to avoid unreliable automatic decisions.
+
+Because the dataset is synthetic, its results will not by themselves establish performance on real support tickets. The dataset, labelling rules, and evaluation methodology will be documented to make the limitations of the results explicit.
 
 
 ## How it works

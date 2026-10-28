@@ -2,6 +2,8 @@
 
 I use AI to help me brainstorm ideas, reflect about the problem, search for relevant resources for my defined problem, create diagrams of the system Architecture or the data flow in order to help me think clearly and anticipate problems that i would face along the way. I also use AI to create scenarios to test my application, and in coding but i verify each line of code and make sure everything is working as it supposed to be.
 
+I used AI to generate the synthetic data i am using.
+
 ## Tools I used
 
 I use cursor for assisstance with code and project organisation.
