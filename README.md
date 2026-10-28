@@ -124,6 +124,33 @@ The category and priority labels serve as ground-truth targets for training and 
 
 Because the dataset is synthetic, its results will not by themselves establish performance on real support tickets. The dataset, labelling rules, and evaluation methodology will be documented to make the limitations of the results explicit.
 
+## The system architecture
+
+The Deskline AI assistant submits an escalated ticket to the intake API. A background worker then classifies it, applies priority and routing rules, stores the result, and notifies a webhook. The assistant can read the ticket ID and status back from the API.
+
+![Desktriage system architecture. The Deskline AI assistant posts a ticket to the intake API. A background worker classifies it, applies priority and routing rules, and stores the result in PostgreSQL. A mock webhook receives the notification, and the ticket ID and status return to the assistant.](docs/system-architecture.png)
+
+### Design rationale and trade-offs
+
+- **Separate API and background worker:** The API can accept tickets without waiting for classification to finish. The worker processes tickets independently and can retry failed jobs. The trade-off is extra complexity in tracking ticket status and recovering interrupted jobs.
+
+- **PostgreSQL database:** PostgreSQL allows the API and multiple workers to access shared ticket data. Row-level locking helps prevent workers from claiming the same ticket. The trade-off is additional setup and maintenance; if the database becomes unavailable, ticket processing and API operations that require it will be affected.
+
+- **Classifier inside the worker:** Keeping the model inside the worker avoids an extra container and internal HTTP requests. The trade-off is that the model and worker must be deployed together, and scaling classification independently is harder.
+
+- **Confidence-based human review:** Low-confidence predictions are sent for human review instead of being routed automatically. This reduces the risk of incorrect assignments but increases manual workload and can delay ticket handling.
+
+- **Rule-based priority and routing:** Explicit rules make operational priorities and team assignments easier to understand and test. However, incomplete or outdated rules can produce incorrect decisions, and some tickets may not fit the defined categories.
+
+- **Webhook notifications:** Notifications alert the destination system when a ticket is ready. If the receiver is unavailable or a request times out, delivery may fail. Retries can also produce duplicate notifications unless idempotency is implemented.
+
+- **Docker Compose:** Containers provide a repeatable environment for running and testing the API, worker, database and notification receiver. The trade-off is additional configuration and resource usage compared with running everything in one process.
+
+- **Persistent database storage:** A Docker volume keeps PostgreSQL data when its container is recreated. However, a volume alone does not protect against every disk failure or data loss, so backups and recovery procedures are still needed.
+
+Desktriage sequence diagram reflecting the PostgreSQL container, with the classifier running inside the background worker and the webhook receiver handling notifications.
+
+![Desktriage sequence diagram reflecting the PostgreSQL container, with the classifier running inside the background worker and the webhook receiver handling notifications.](docs/sequence-diagram.png)
 
 ## How it works
 
