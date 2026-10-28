@@ -1,0 +1,17 @@
+# Keep training, evaluation data, and tests out of the runtime image builds.
+# The worker reads the exported model from a mounted volume, not from the build context.
+
+.git
+**/.venv
+**/venv
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.ipynb_checkpoints
+**/.env
+training
+tests
+dataset
+docs
+models
+**/*.md

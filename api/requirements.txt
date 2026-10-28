@@ -1,0 +1,4 @@
+# Dependencies for the intake API, in addition to common/requirements.txt.
+#
+# fastapi
+# uvicorn

@@ -1,0 +1,22 @@
+-- Schema applied by the PostgreSQL container on the first start of the postgres_data volume.
+-- Later changes need a new script or a migration; editing this file does nothing
+-- once the volume already exists.
+--
+-- tickets
+--   Public ticket id, optional user id, query text, escalation reason.
+--   Status from desktriage_common.statuses, attempt count, timestamps,
+--   and the claim fields the worker uses.
+--   Unique public ticket id.
+--   Index the status the worker polls.
+--   Do not add dataset label columns. Category and priority are decisions, not intake fields.
+--
+-- triage_decisions
+--   Ticket reference, category, priority, confidence, human-review flag,
+--   destination team, routing outcome, model version, and the time of the decision.
+--
+-- webhook_deliveries
+--   Ticket reference, idempotency key, attempt number, response status,
+--   error text, and delivery time.
+--   Unique idempotency key.
+--
+-- The worker claim query needs a row lock so two workers cannot take the same ticket.

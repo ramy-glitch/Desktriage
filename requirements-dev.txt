@@ -1,0 +1,5 @@
+# Host dependencies for the tests in tests/.
+# These do not belong in the API, worker, or webhook images.
+#
+# pytest
+# httpx

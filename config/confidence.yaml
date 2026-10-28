@@ -1,0 +1,8 @@
+# Minimum category-classifier confidence for automatic routing.
+# worker/app/confidence/gate.py reads this file.
+#
+# Set the threshold from the validation section of
+# training/notebooks/classifier_training.ipynb.
+# Tickets below the threshold go to human review.
+#
+# threshold:

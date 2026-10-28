@@ -1,0 +1,11 @@
+# The training notebook writes the exported category classifier here.
+# The worker container reads this directory at /app/models.
+#
+# Artifacts the notebook should leave in this folder:
+#   the category classifier, in the format loader.py will read
+#   category_labels.json    label order used by that classifier
+#   evaluation_summary.json per-class precision, recall, and F1;
+#                           priority performance; urgent-ticket recall;
+#                           human-review rate; the confidence threshold you chose
+#
+# Generated files in this directory are gitignored. This file stays.

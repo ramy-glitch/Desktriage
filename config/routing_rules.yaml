@@ -1,0 +1,17 @@
+# Destination for a ticket the confidence gate allows the worker to route.
+# worker/app/routing/rules.py reads this file from /app/config.
+#
+# Fill in a destination team for each category the service routes automatically.
+# Categories from the dataset card:
+#   eligibility_and_enrollment
+#   coverage_and_benefits
+#   claims_and_appeals
+#   costs_and_financial_assistance
+#   access_and_referrals
+#   policy_interpretation
+#   other_or_unknown
+#
+# Add a priority condition only where the destination depends on priority.
+# Tickets sent to human review do not receive a team from this file.
+# When you want the rules to match the synthetic labels, use the assigned_team
+# values described in dataset/desktriage_dataset_card.md.

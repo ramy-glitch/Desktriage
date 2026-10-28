@@ -1,0 +1,12 @@
+# Operational handling priority. worker/app/priority/policy.py reads this file.
+#
+# The synthetic labels use the Cabinet Office technical incident management
+# guidance, as described in the dataset card:
+#   P1  immediate administrative deadline or material deadline risk
+#   P2  time-sensitive administrative need requiring prompt review
+#   P3  routine unresolved query
+#   P4  non-time-sensitive information request
+#
+# Write the inputs a rule may use (query text, escalation reason, and any
+# structured fields the intake API stores) and the priority each case returns.
+# Check the policy against the labelled priorities in the training notebook.

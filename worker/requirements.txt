@@ -1,0 +1,5 @@
+# Dependencies for the worker, in addition to common/requirements.txt.
+# Include the same model library the training notebook uses to export the classifier.
+#
+# httpx
+# and the model library chosen in training/notebooks/classifier_training.ipynb

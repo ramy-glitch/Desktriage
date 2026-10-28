@@ -1,0 +1,4 @@
+# Dependencies for the mock receiver, in addition to common/requirements.txt.
+#
+# fastapi
+# uvicorn
