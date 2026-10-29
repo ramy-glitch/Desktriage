@@ -9,7 +9,7 @@ Return a not-found error for an unknown id.
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from common.desktriage_common.schemas import TicketStatus
+from desktriage_common.schemas import TicketStatus
 
 from ..errors import not_found_response
 from ..repository import get_ticket

@@ -9,9 +9,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from common.desktriage_common.config import get_settings
-from common.desktriage_common.db import check_session
-from common.desktriage_common.logging import get_logger
+from desktriage_common.config import get_settings
+from desktriage_common.db import check_session
+from desktriage_common.logging import get_logger
 
 from .routes.health import router as health_router
 from .routes.ingest import router as ingest_router

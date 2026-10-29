@@ -8,11 +8,13 @@ FROM python:3.12-slim
 WORKDIR /app
 
 COPY common/requirements.txt /tmp/common-requirements.txt
-COPY common/desktriage_common /app/desktriage_common
 COPY api/requirements.txt /tmp/api-requirements.txt
+RUN pip install --no-cache-dir -r /tmp/common-requirements.txt -r /tmp/api-requirements.txt
+
+COPY common/desktriage_common /app/desktriage_common
 COPY api /app/api
 
-# Install both requirements files.
-# Set PYTHONPATH=/app so `import desktriage_common` and `import api` resolve.
-# Start the process in api/app/main.py and listen on port 8000.
+# PYTHONPATH=/app makes `import desktriage_common` and `import api` resolve.
+ENV PYTHONPATH=/app
 EXPOSE 8000
+CMD ["python", "-m", "api.app.main"]

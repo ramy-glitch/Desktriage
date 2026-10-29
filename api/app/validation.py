@@ -10,7 +10,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from common.desktriage_common.schemas import TicketIngest
+from desktriage_common.schemas import TicketIngest
 
 
 class IntakeValidationError(ValueError):

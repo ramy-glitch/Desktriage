@@ -8,7 +8,7 @@ intake belong to the worker, which keeps the row and retries it.
 
 from fastapi.responses import JSONResponse
 
-from common.desktriage_common.logging import get_logger, log_request_failure
+from desktriage_common.logging import get_logger, log_request_failure
 
 from .validation import IntakeValidationError
 

@@ -1,4 +1,7 @@
 # Dependencies for the intake API, in addition to common/requirements.txt.
 #
-# fastapi
-# uvicorn
+# fastapi: the application and the intake, status, and health routes
+# uvicorn: the server process started from api/app/main.py
+
+fastapi==0.162.0
+uvicorn==0.52.2

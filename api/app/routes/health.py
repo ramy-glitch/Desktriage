@@ -7,8 +7,8 @@ Compose can call this once you want the API to gate dependent startup.
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from common.desktriage_common.db import check_session
-from common.desktriage_common.logging import get_logger, log_request_failure
+from desktriage_common.db import check_session
+from desktriage_common.logging import get_logger, log_request_failure
 
 router = APIRouter()
 _logger = get_logger("api")

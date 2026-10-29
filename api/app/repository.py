@@ -12,14 +12,14 @@ from collections.abc import Mapping
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from common.desktriage_common.db import get_session
-from common.desktriage_common.schemas import (
+from desktriage_common.db import get_session
+from desktriage_common.schemas import (
     TicketAccepted,
     TicketIngest,
     TicketStatus,
     TriageDecision,
 )
-from common.desktriage_common.statuses import Status
+from desktriage_common.statuses import Status
 
 from .errors import TicketStoreError
 

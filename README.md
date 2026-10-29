@@ -148,17 +148,19 @@ The Deskline AI assistant submits an escalated ticket to the intake API. A backg
 
 - **Persistent database storage:** A Docker volume keeps PostgreSQL data when its container is recreated. However, a volume alone does not protect against every disk failure or data loss, so backups and recovery procedures are still needed.
 
+
+## How it works
+
 Desktriage sequence diagram reflecting the PostgreSQL container, with the classifier running inside the background worker and the webhook receiver handling notifications.
 
 ![Desktriage sequence diagram reflecting the PostgreSQL container, with the classifier running inside the background worker and the webhook receiver handling notifications.](docs/sequence-diagram.png)
 
-## How it works
 
 ## How to run it
 
 ### Database
 
-PostgreSQL runs as the `db` service in `docker-compose.yml`. This step starts that service on its own. The API, worker, and webhook are in the same Compose file, and their images do not yet install dependencies or start a process.
+PostgreSQL runs as the `db` service in `docker-compose.yml`. This step starts that service on its own. The worker and webhook images in the same Compose file still only copy source files. They do not install dependencies or start a process. The intake API image is the next section.
 
 Docker Desktop has to be running before Compose can start the container. From the repository root:
 
@@ -186,5 +188,67 @@ docker compose up db
 ```
 
 `docker compose down -v` deletes the `postgres_data` volume.
+
+### Intake API
+
+This starts the intake API and the database it depends on. Compose does not start the worker or the webhook.
+
+```bash
+docker compose up --build api
+```
+
+The image installs `common/requirements.txt` and `api/requirements.txt`, copies the shared library to `/app/desktriage_common` and the API to `/app/api`, sets `PYTHONPATH=/app`, and runs `python -m api.app.main`. Inside the container the process listens on port 8000. `API_PORT` in `.env` is the port published on the host. The default is 8000.
+
+On startup the process reads settings and opens a database session. The log then shows `Application startup complete` and `Uvicorn running on http://0.0.0.0:8000`. `DATABASE_URL` has to use the same role password that was stored when the `postgres_data` volume was first created. `POSTGRES_PASSWORD` is applied only on that first start. A later change in `.env` leaves the old password in the volume. The API then logs `event=startup_failure` and exits. The database health check can still pass, because `pg_isready` does not use the password.
+
+With the API up, check that this process is running and that PostgreSQL accepts a connection:
+
+```bash
+curl http://localhost:8000/health
+```
+
+A ready API returns `{"status":"ok","database":"ok"}`. In PowerShell, call `curl.exe`. `curl` there is `Invoke-WebRequest`.
+
+Submit an escalated query. The body is the query, the escalation reason, and the user id. Category, priority, and assigned team are not intake fields.
+
+```bash
+curl -X POST http://localhost:8000/tickets \
+  -H "Content-Type: application/json" \
+  -d "{\"query_text\":\"When does coverage start?\",\"escalation_reason\":\"assistant unsure\",\"user_id\":\"user-1\"}"
+```
+
+A valid ticket returns 202 with a new ticket id and the status `accepted`. That status is the intake acknowledgement. The stored row is `queued`, so a worker can claim it later. This response has no category and no team.
+
+Read that ticket back. Replace the id with the one from the 202 response:
+
+```bash
+curl http://localhost:8000/tickets/0901dfd7-e07c-4209-9525-8300af7c2b61
+```
+
+Before the worker has stored a decision, the body is the id, the status `queued`, and `"decision": null`. An unknown id returns 404.
+
+The same row is visible in PostgreSQL:
+
+```bash
+docker compose exec db psql -U desktriage -d desktriage -c "SELECT ticket_id, status FROM tickets"
+```
+
+The user and database name are the `POSTGRES_USER` and `POSTGRES_DB` values from `.env`.
+
+### Run Uvicorn without building the image
+
+The API imports `desktriage_common` and `api` as top-level packages. In the image, both directories sit directly under `/app`, and `PYTHONPATH=/app` makes those imports resolve. In the repository, `desktriage_common` is inside `common/`. A process started from the repository root can import `api` and cannot import `desktriage_common` until `common` is on `PYTHONPATH`.
+
+From the repository root in PowerShell, with the database container already running:
+
+```powershell
+$env:PYTHONPATH = "$pwd;$pwd\common"
+$env:DATABASE_URL = "postgresql+psycopg://desktriage:<password>@127.0.0.1:5432/desktriage"
+python -m uvicorn api.app.main:app --host 127.0.0.1 --port 8000
+```
+
+`$pwd` is the repository root. `$pwd\common` is the directory that contains `desktriage_common`. The user, password, database name, and port are `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and `POSTGRES_PORT` from `.env`. The host in this shell is `127.0.0.1`, because `db` is the Compose service name and resolves only on the Compose network. Leave `DATABASE_URL` in `.env` pointing at `db`. The shell variable applies to this process only, so the container can keep using `db`.
+
+Uvicorn then serves the same routes. Startup still opens a database session, so an insert or a status read reaches PostgreSQL. If the API container is already bound to port 8000, choose another port for this process.
 
 ## What I would improve with more time

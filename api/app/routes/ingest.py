@@ -10,7 +10,7 @@ import json
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from common.desktriage_common.schemas import TicketAccepted
+from desktriage_common.schemas import TicketAccepted
 
 from ..errors import TicketStoreError, intake_error_response
 from ..repository import insert_ticket
