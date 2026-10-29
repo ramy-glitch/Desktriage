@@ -156,6 +156,35 @@ Desktriage sequence diagram reflecting the PostgreSQL container, with the classi
 
 ## How to run it
 
+### Database
 
+PostgreSQL runs as the `db` service in `docker-compose.yml`. This step starts that service on its own. The API, worker, and webhook are in the same Compose file, and their images do not yet install dependencies or start a process.
+
+Docker Desktop has to be running before Compose can start the container. From the repository root:
+
+```bash
+docker compose up db
+```
+
+Compose reads `.env`. `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` are the role, password, and database name. `POSTGRES_PORT` is the port published on the host. Inside the container, PostgreSQL listens on port 5432. `DATABASE_URL` uses the host name `db` and port 5432, which is the address the API and worker use on the Compose network.
+
+The first start of an empty `postgres_data` volume creates the database and runs `db/init/001_schema.sql`. The log reports `CREATE TABLE` for `tickets`, `triage_decisions`, and `webhook_deliveries`, then `database system is ready to accept connections`. A later start of the same volume opens the existing database and does not run that script again.
+
+From a second terminal, list the tables. The user and database name are the `POSTGRES_USER` and `POSTGRES_DB` values from `.env`:
+
+```bash
+docker compose exec db psql -U desktriage -d desktriage -c "\dt"
+```
+
+`\d tickets`, `\d triage_decisions`, and `\d webhook_deliveries` show the columns of each table.
+
+Editing `001_schema.sql` has no effect after the volume exists. A later change needs a new script or a migration. To apply this file again to a local database you are willing to discard:
+
+```bash
+docker compose down -v
+docker compose up db
+```
+
+`docker compose down -v` deletes the `postgres_data` volume.
 
 ## What I would improve with more time
