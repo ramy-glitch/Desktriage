@@ -1,7 +1,12 @@
 # Libraries shared by the images that import desktriage_common.
 # Install this file from the API, worker, and webhook Dockerfiles.
 #
-# pydantic
-# pydantic-settings
-# sqlalchemy
-# psycopg[binary]
+# pydantic: schemas.py and config.py
+# pydantic-settings: config.py
+# sqlalchemy: db.py
+# psycopg: driver for the postgresql+psycopg DATABASE_URL opened by db.py
+
+pydantic==2.14.1
+pydantic-settings==2.16.2
+sqlalchemy==2.1.6
+psycopg[binary]==3.3.6

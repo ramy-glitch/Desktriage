@@ -12,6 +12,8 @@ I learned about idempotency. For example, when a webhook is sent to a system but
 
 I learned about pydantic, it is kind of similar to the validation models that i was building in Laravel (the M in MVC) and mongoose in MongoDB, prisma in nodejs and so on, used for assisting with data validation. Well for this prototype i am not using regular expressions, although i used enums i am using only strings.
 
+I have learned the difference between polling, webhooks and cron jobs. Polling is the system repeatedly asks an external service whether an operation has finished or whether new information is available, at regular intervals. webhook is when a system is configured to send automatic notifications to another system when a specific event occurs, such as a new support ticket being created. cron jobs: a task is scheduled to run automatically at specified times or intervals, using a schedule such as a cron expression.
+
 
 ## Where I looked
 
@@ -25,6 +27,7 @@ Idempotency: https://chatgpt.com/share/6ae1f984-af0c-83eb-be4b-aaef6a33df7f
 
 Pydantic: just asked my code pilot to explain it for me, it is pretty easy.
 
+polling vs cron vs webhooks: https://chatgpt.com/share/6ae33cd1-3c14-83ed-b1e6-a9e23d1d85ca
 
 ## How I judged it
 
