@@ -253,6 +253,13 @@ $env:DATABASE_URL = "postgresql+psycopg://desktriage:<password>@127.0.0.1:5432/d
 python -m uvicorn api.app.main:app --host 127.0.0.1 --port 8000
 ```
 
+When running this command make sure to replace `<password>` with the value of `POSTGRES_PASSWORD`. Make sure you stop the api container: 
+
+```powershell
+docker compose stop api
+```
+and if you want to build the api image again use another terminal.
+
 `$pwd` is the repository root. `$pwd\common` is the directory that contains `desktriage_common`. The user, password, database name, and port are `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and `POSTGRES_PORT` from `.env`. The host in this shell is `127.0.0.1`, because `db` is the Compose service name and resolves only on the Compose network. Leave `DATABASE_URL` in `.env` pointing at `db`. The shell variable applies to this process only, so the container can keep using `db`.
 
 Uvicorn then serves the same routes. Startup still opens a database session, so an insert or a status read reaches PostgreSQL. If the API container is already bound to port 8000, choose another port for this process.
