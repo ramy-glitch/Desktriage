@@ -212,17 +212,23 @@ A ready API returns `{"status":"ok","database":"ok"}`. In PowerShell, call `curl
 Submit an escalated query. The body is the query, the escalation reason, and the user id. Category, priority, and assigned team are not intake fields.
 
 ```bash
-curl -X POST http://localhost:8000/tickets \
-  -H "Content-Type: application/json" \
-  -d "{\"query_text\":\"When does coverage start?\",\"escalation_reason\":\"assistant unsure\",\"user_id\":\"user-1\"}"
+curl.exe --% -X POST http://localhost:8000/tickets -H "Content-Type: application/json" -d "{\"query_text\":\"When does coverage start?\",\"escalation_reason\":\"assistant unsure\",\"user_id\":\"user-1\"}"
 ```
+
+You might need to adjust this command to your OS (I used powershell windows), you cannot enter the request in the browser for this route because swagger is unable to map a function that was created outside of the routing function to the UI.
 
 A valid ticket returns 202 with a new ticket id and the status `accepted`. That status is the intake acknowledgement. The stored row is `queued`, so a worker can claim it later. This response has no category and no team.
 
 Read that ticket back. Replace the id with the one from the 202 response:
 
 ```bash
-curl http://localhost:8000/tickets/0901dfd7-e07c-4209-9525-8300af7c2b61
+curl.exe http://localhost:8000/tickets/{ticket_id}
+```
+
+for example:
+
+```bash
+curl.exe http://localhost:8000/tickets/0901dfd7-e07c-4209-9525-8300af7c2b61
 ```
 
 Before the worker has stored a decision, the body is the id, the status `queued`, and `"decision": null`. An unknown id returns 404.
