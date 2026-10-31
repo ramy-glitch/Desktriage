@@ -222,7 +222,9 @@ Uvicorn then serves the same routes. Startup still opens a database session, so 
 
 ## What I would improve with more time
 
-In the future I might train a classifier that would classify the priority instead of detecting cues of urgency from the user query. My reason for not using an LLM to do that from the start was to use less computing power and reduce the need for more resources, and because someone who knows the current design may exploit that to rank their query higher in priority.
+In the future I might train a classifier that would classify the priority instead of detecting cues of urgency from the user query. My reason for not using an LLM to do that from the start was to use less computing power and reduce the need for more resources, and because someone who knows the current design may exploit that to rank their query higher in priority,  or i might just configure the AI assistant to return the priority of that query but then that outsourcing can be hard to control.
+
+Based on the priority of the query, we might assign it to different teams in the future and that tweak should happen in worker/app/routing/rules.py.
 
 
 
