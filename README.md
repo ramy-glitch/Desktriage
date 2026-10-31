@@ -250,7 +250,9 @@ A raw query still has to be cleaned and encoded with `text_prep.json` and `word2
 
 ## What I would improve with more time
 
-In the future it would be real data that i train the classifier on and that will make the classification more realistic, and i might experiment with different models. My reason for not using an LLM to do that from the start was to use less computing power and reduce the need for more resources. 
+With more time, I would train the classifier on real support tickets so the categories and priorities reflect the requests staff actually receive. I would also try other models and run statistical tests on the results. The current scores come from synthetic data. I started with a smaller model instead of a large language model, because training would use less computing power and need fewer resources during inference.
+
+
 
 
 
