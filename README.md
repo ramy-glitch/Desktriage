@@ -220,11 +220,37 @@ and if you want to build the api image again use another terminal.
 
 Uvicorn then serves the same routes. Startup still opens a database session, so an insert or a status read reaches PostgreSQL. If the API container is already bound to port 8000, choose another port for this process.
 
+### Classifier notebook
+
+Training runs on the host, in `training/notebooks/classifier_training.ipynb`. It is not a Compose service.
+
+From the repository root, create a virtual environment, install the notebook requirements, and register a kernel named `desktriage`:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r training\requirements.txt
+.\.venv\Scripts\python.exe -m ipykernel install --user --name desktriage --display-name "Desktriage"
+```
+
+In Cursor, open `training/notebooks/classifier_training.ipynb` and choose the **Desktriage** kernel. Run the cells from the top. The kernel keeps running after you close the terminal that registered it. The `.venv` folder has to stay in place.
+
+Before the Comet cells, create a new project in [Comet](https://www.comet.com). Name it `desktriage-classifier`. Copy `.env.example` to `.env` and set `COMET_API_KEY` to that project's API key. `COMET_PROJECT_NAME` stays `desktriage-classifier`. `.env` is gitignored. The notebook reads those two variables and does not store the key in the notebook.
+
+The search, the seed check, and the final training run log to that Comet project. The held-out scores and the confidence threshold are written at the end of the notebook.
+
+The fitted model is already stored, so you can use it without running that search again. `models/category_classifier.keras` is the two-head network, about 3.4 MB, which is small enough to keep in git. The same folder holds the vocabulary (`word2idx.json`), the cleaning rules (`text_prep.json`), the label order, `evaluation_summary.json`, and `confidence_sweep.csv`. `config/confidence.yaml` holds the threshold chosen on the validation users, `0.30`. Loading the network needs TensorFlow:
+
+```python
+import tensorflow as tf
+
+model = tf.keras.models.load_model("models/category_classifier.keras")
+```
+
+A raw query still has to be cleaned and encoded with `text_prep.json` and `word2idx.json` before that call. The worker is expected to do that when `worker/app/classifier/loader.py` is filled in.
+
 ## What I would improve with more time
 
-In the future I might train a classifier that would classify the priority instead of detecting cues of urgency from the user query. My reason for not using an LLM to do that from the start was to use less computing power and reduce the need for more resources, and because someone who knows the current design may exploit that to rank their query higher in priority,  or i might just configure the AI assistant to return the priority of that query but then that outsourcing can be hard to control.
-
-Based on the priority of the query, we might assign it to different teams in the future and that tweak should happen in worker/app/routing/rules.py.
+In the future it would be real data that i train the classifier on and that will make the classification more realistic, and i might experiment with different models. My reason for not using an LLM to do that from the start was to use less computing power and reduce the need for more resources. 
 
 
 

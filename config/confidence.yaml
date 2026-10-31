@@ -5,9 +5,8 @@
 # training/notebooks/classifier_training.ipynb.
 # Tickets below the threshold go to human review.
 #
-# Temporary stand-in until that notebook chooses a value from the validation
-# split. Replace this number with that result. It is not an evaluated
-# operating point. 0.5 sits in the middle of the allowed range, so a score
-# can fall on either side of the gate while the classifier is still in progress.
+# Chosen in training/notebooks/classifier_training.ipynb.
+# Every validation threshold from 0.30 to 0.90 had automatic-routing error 0
+# and review rate 0.053, so the rule keeps the lowest of those.
 
-threshold: 0.5
+threshold: 0.30

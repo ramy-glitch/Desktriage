@@ -6,7 +6,16 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 *.egg-info/
+.comet.config
+comet-logs/
 
-# Exported artifacts. The training notebook writes these; the folder stays in git.
+# Keep the trained export. Ignore anything else dropped into models/.
 models/*
 !models/.gitkeep
+!models/category_classifier.keras
+!models/category_labels.json
+!models/priority_labels.json
+!models/word2idx.json
+!models/text_prep.json
+!models/evaluation_summary.json
+!models/confidence_sweep.csv

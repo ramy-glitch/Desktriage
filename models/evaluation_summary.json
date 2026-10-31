@@ -1,0 +1,81 @@
+{
+  "model": "shared-bilstm-two-head",
+  "comet_project": "desktriage-classifier",
+  "comet_url": "https://www.comet.com/ramy-glitch/desktriage-classifier/1089d45c14034c86987eccbb0a1b799a",
+  "config": {
+    "lstm_units": 90,
+    "embed_dim": 127,
+    "dropout": 0.26455458404421384,
+    "learning_rate": 0.003400925315473854
+  },
+  "seed": 123,
+  "max_len": 48,
+  "test_category": {
+    "accuracy": 0.9511111111111111,
+    "precision": 0.9575289575289575,
+    "recall": 0.9558327758424775,
+    "f1": 0.951974899776489
+  },
+  "test_priority": {
+    "accuracy": 0.9733333333333334,
+    "precision": 0.9857142857142858,
+    "recall": 0.9477246543778802,
+    "f1": 0.9652365905039703
+  },
+  "test_p1_recall": 0.875,
+  "test_rules_priority": {
+    "accuracy": 0.9777777777777777,
+    "precision": 0.9879807692307692,
+    "recall": 0.9789746543778802,
+    "f1": 0.9830985628791271
+  },
+  "test_rules_p1_recall": 1.0,
+  "confidence_threshold": 0.3,
+  "val_review_rate": 0.053333333333333344,
+  "val_automatic_error": 0.0,
+  "test_review_rate": 0.053333333333333344,
+  "test_automatic_error": 0.0,
+  "seed_validation": [
+    {
+      "seed": 42,
+      "val_category_f1": 0.9568564223322359,
+      "val_priority_f1": 0.9791873616771145,
+      "val_mean_macro_f1": 0.9680218920046753,
+      "val_category_acc": 0.9555555555555556,
+      "val_priority_acc": 0.9733333333333334
+    },
+    {
+      "seed": 123,
+      "val_category_f1": 0.957226977482841,
+      "val_priority_f1": 0.9791873616771145,
+      "val_mean_macro_f1": 0.9682071695799778,
+      "val_category_acc": 0.9555555555555556,
+      "val_priority_acc": 0.9733333333333334
+    },
+    {
+      "seed": 2026,
+      "val_category_f1": 0.9532839528773386,
+      "val_priority_f1": 0.9749539523453763,
+      "val_mean_macro_f1": 0.9641189526113574,
+      "val_category_acc": 0.9511111111111111,
+      "val_priority_acc": 0.9688888888888889
+    },
+    {
+      "seed": 7,
+      "val_category_f1": 0.957226977482841,
+      "val_priority_f1": 0.9164729030919003,
+      "val_mean_macro_f1": 0.9368499402873707,
+      "val_category_acc": 0.9555555555555556,
+      "val_priority_acc": 0.9555555555555556
+    },
+    {
+      "seed": 99,
+      "val_category_f1": 0.9470201920659715,
+      "val_priority_f1": 0.9791873616771145,
+      "val_mean_macro_f1": 0.963103776871543,
+      "val_category_acc": 0.9466666666666667,
+      "val_priority_acc": 0.9733333333333334
+    }
+  ],
+  "dataset": "synthetic desktriage tickets"
+}

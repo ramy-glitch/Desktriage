@@ -2,10 +2,13 @@
 # The worker container reads this directory at /app/models.
 #
 # Artifacts the notebook should leave in this folder:
-#   the category classifier, in the format loader.py will read
-#   category_labels.json    label order used by that classifier
-#   evaluation_summary.json per-class precision, recall, and F1;
-#                           priority performance; urgent-ticket recall;
-#                           human-review rate; the confidence threshold you chose
+#   category_classifier.keras   shared BiLSTM, category head and priority head
+#   word2idx.json               training vocabulary, padding length, OOV index
+#   text_prep.json              cleaning rules the worker must repeat
+#   category_labels.json        category softmax order
+#   priority_labels.json        priority softmax order
+#   evaluation_summary.json     held-out precision, recall, and F1 for both heads;
+#                               P1 recall; human-review rate; confidence threshold
+#   confidence_sweep.csv        validation threshold table
 #
-# Generated files in this directory are gitignored. This file stays.
+# These export files are kept in git. The Keras file is about 3.4 MB.
