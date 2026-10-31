@@ -1,5 +1,7 @@
-# Load the category classifier written by training/notebooks/classifier_training.ipynb.
+# Load the two-head classifier written by training/notebooks/classifier_training.ipynb.
 # Read it from /app/models (the ./models mount).
-# Also read category_labels.json so prediction indexes map to the shared category names.
+# category_classifier.keras is the shared BiLSTM.
+# word2idx.json and text_prep.json repeat the notebook's vocabulary and cleaning.
+# category_labels.json and priority_labels.json are the softmax index order.
 # Expose a model version or file identity that trace.py can store.
-# Use the same library and file layout the notebook exports.
+# Loading this file needs TensorFlow, the same library the notebook used to save it.

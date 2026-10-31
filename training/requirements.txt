@@ -1,7 +1,13 @@
-# Notebook environment for training, evaluation, and statistical tests.
-# Install this on the host. The API, worker, and webhook images do not install it.
-#
-# jupyter
-# pandas
-# and the model library and statistics libraries you use in
-# training/notebooks/classifier_training.ipynb
+# Notebook environment. Install this on the host.
+# The API, worker, and webhook images do not install it.
+# Comet is used by the notebook only.
+
+jupyter
+pandas
+numpy
+scikit-learn
+matplotlib
+scipy
+tensorflow
+comet_ml
+pyyaml
