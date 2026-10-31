@@ -15,3 +15,20 @@
 # Tickets sent to human review do not receive a team from this file.
 # When you want the rules to match the synthetic labels, use the assigned_team
 # values described in dataset/desktriage_dataset_card.md.
+#
+# In the labelled tickets each category has one assigned_team, at every
+# priority, so no rule below adds a priority condition.
+# other_or_unknown is labelled requires_human_review on every row. Its
+# synthetic assigned_team is general_human_review, which is the review queue.
+# This file does not assign that queue as a destination team.
+
+routes:
+  eligibility_and_enrollment: enrollment_support
+  coverage_and_benefits: benefits_support
+  claims_and_appeals: claims_support
+  costs_and_financial_assistance: financial_assistance_support
+  access_and_referrals: access_support
+  policy_interpretation: policy_specialist
+
+human_review_categories:
+  - other_or_unknown

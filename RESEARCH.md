@@ -14,6 +14,8 @@ I learned about pydantic, it is kind of similar to the validation models that i 
 
 I have learned the difference between polling, webhooks and cron jobs. Polling is the system repeatedly asks an external service whether an operation has finished or whether new information is available, at regular intervals. webhook is when a system is configured to send automatic notifications to another system when a specific event occurs, such as a new support ticket being created. cron jobs: a task is scheduled to run automatically at specified times or intervals, using a schedule such as a cron expression.
 
+I already know XML and Json, but this is the first time i delt with a ymal file, so i tried to understand the difference between the three. i used ymal to be maintainable as well. 
+
 
 ## Where I looked
 
