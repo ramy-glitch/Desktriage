@@ -3,3 +3,7 @@
 #
 # httpx
 # and the model library chosen in training/notebooks/classifier_training.ipynb
+
+# PyYAML: the worker reads config/priority_policy.yaml, config/routing_rules.yaml,
+# and config/confidence.yaml.
+PyYAML==6.0.3

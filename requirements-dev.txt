@@ -1,9 +1,10 @@
 # Host dependencies for the tests in tests/.
 # These do not belong in the API, worker, or webhook images.
-# common and api are included so a test can import the intake application.
+# common, api, and worker are included so a test can import those packages.
 
 -r common/requirements.txt
 -r api/requirements.txt
+-r worker/requirements.txt
 
 # pytest: runs the tests
 # httpx: client used by FastAPI's TestClient
