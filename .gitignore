@@ -12,7 +12,7 @@ comet-logs/
 # Keep the trained export. Ignore anything else dropped into models/.
 models/*
 !models/.gitkeep
-!models/category_classifier.keras
+!models/classifier.keras
 !models/category_labels.json
 !models/priority_labels.json
 !models/word2idx.json

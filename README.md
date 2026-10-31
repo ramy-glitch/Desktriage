@@ -238,12 +238,12 @@ Before the Comet cells, create a new project in [Comet](https://www.comet.com). 
 
 The search, the seed check, and the final training run log to that Comet project. The held-out scores and the confidence threshold are written at the end of the notebook.
 
-The fitted model is already stored, so you can use it without running that search again. `models/category_classifier.keras` is the two-head network, about 3.4 MB, which is small enough to keep in git. The same folder holds the vocabulary (`word2idx.json`), the cleaning rules (`text_prep.json`), the label order, `evaluation_summary.json`, and `confidence_sweep.csv`. `config/confidence.yaml` holds the threshold chosen on the validation users, `0.30`. Loading the network needs TensorFlow:
+The fitted model is already stored, so you can use it without running that search again. `models/classifier.keras` is the two-head network, about 3.4 MB, which is small enough to keep in git. One head is category and the other is priority. The same folder holds the vocabulary (`word2idx.json`), the cleaning rules (`text_prep.json`), the label order, `evaluation_summary.json`, and `confidence_sweep.csv`. `config/confidence.yaml` holds the threshold chosen on the validation users, `0.30`. Loading the network needs TensorFlow:
 
 ```python
 import tensorflow as tf
 
-model = tf.keras.models.load_model("models/category_classifier.keras")
+model = tf.keras.models.load_model("models/classifier.keras")
 ```
 
 A raw query still has to be cleaned and encoded with `text_prep.json` and `word2idx.json` before that call. The worker is expected to do that when `worker/app/classifier/loader.py` is filled in.

@@ -1,8 +1,8 @@
-# The training notebook writes the exported category classifier here.
+# The training notebook writes the exported two-head classifier here.
 # The worker container reads this directory at /app/models.
 #
 # Artifacts the notebook should leave in this folder:
-#   category_classifier.keras   shared BiLSTM, category head and priority head
+#   classifier.keras            shared BiLSTM, category head and priority head
 #   word2idx.json               training vocabulary, padding length, OOV index
 #   text_prep.json              cleaning rules the worker must repeat
 #   category_labels.json        category softmax order
