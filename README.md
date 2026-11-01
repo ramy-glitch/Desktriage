@@ -329,7 +329,7 @@ curl.exe --% -X POST http://localhost:8000/tickets -H "Content-Type: application
 
 Read that second id. The finished status is `needs_human_review`, with `requires_human_review` true and `destination` null. The webhook still receives it. The decision row has `routing_outcome` `needs_human_review`.
 
-### Stop the stack
+### Stop and start the stack
 
 From the repository root, this stops the API, the worker, the webhook, and the database, and removes their containers:
 
@@ -345,7 +345,15 @@ To stop the containers and delete that database volume:
 docker compose down -v
 ```
 
-The next `docker compose up` creates an empty database and runs `db/init/001_schema.sql` again.
+The next start creates an empty database and runs `db/init/001_schema.sql` again.
+
+Start the database, the webhook, the worker, and the API again with:
+
+```bash
+docker compose up api worker
+```
+
+The worker still waits for PostgreSQL to be healthy and for the webhook process to start, so those two containers come up as well. Stored tickets are still in `postgres_data` unless the volume was deleted. Add `--build` when a Dockerfile, a requirements file, or the exported model has changed.
 
 ### Classifier notebook
 
