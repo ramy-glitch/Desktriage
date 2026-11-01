@@ -2,7 +2,10 @@
 
 Call this only when confidence.gate allows automatic routing.
 Return the team that trace.py stores and the webhook payload reports.
-A category listed for human review returns None, so the destination stays unset.
+A category listed for human review returns None, so the destination stays unset
+even when the other head was confident enough to open the gate.
+Priority is accepted because a later rule may depend on it. The current file
+gives each routed category one team at every priority.
 Align the destinations with the dataset's assigned_team labels.
 """
 
@@ -28,8 +31,14 @@ class _Routes:
     human_review: frozenset[Category]
 
 
-def destination_team(category: Category | str) -> str | None:
+def destination_team(category: Category | str, priority: Priority | str) -> str | None:
+    """Return the team for a category, or None when that category is held for review.
+
+    The current routes do not vary by priority. The priority is still checked
+    so a value outside P1–P4 is rejected before a team is chosen.
+    """
     resolved_category = _as_category(category)
+    _as_priority(priority)
     routes = _load_rules(_rules_path())
     if resolved_category in routes.human_review:
         return None

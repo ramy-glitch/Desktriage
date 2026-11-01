@@ -1,5 +1,7 @@
-# Minimum category-classifier confidence for automatic routing.
+# Minimum category-head confidence for automatic routing.
 # worker/app/confidence/gate.py reads this file.
+# The gate also reads the priority-head threshold in config/priority_policy.yaml.
+# Routing proceeds when either head meets its threshold.
 #
 # Set the threshold from the validation section of
 # training/notebooks/classifier_training.ipynb.

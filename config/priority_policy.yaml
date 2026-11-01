@@ -1,5 +1,7 @@
 # Operational priority from the classifier priority head.
 # worker/app/priority/policy.py reads this file.
+# worker/app/confidence/gate.py reads the threshold as well.
+# A confident priority head can allow routing on its own.
 #
 # Confidence is the maximum probability of the priority head.
 # At or above the threshold, the worker stores that priority.
