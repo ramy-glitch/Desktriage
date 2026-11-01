@@ -1,5 +1,5 @@
 # Keep training, evaluation data, and tests out of the runtime image builds.
-# The worker reads the exported model from a mounted volume, not from the build context.
+# The worker image copies models/ and runs inference inside the container.
 
 .git
 **/.venv
@@ -13,5 +13,4 @@ training
 tests
 dataset
 docs
-models
 **/*.md

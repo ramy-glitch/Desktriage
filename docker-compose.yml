@@ -4,8 +4,8 @@
 # db: shared PostgreSQL for tickets and decisions.
 # webhook: local receiver that stands in for the destination system.
 #
-# The category model runs inside the worker. Training stays on the host.
-# The exported model is the mounted ./models directory, not a container.
+# The exported model is copied into the worker image. Inference runs there.
+# Training stays on the host.
 # desktriage_common is a library copied into the images that import it.
 
 services:
@@ -56,7 +56,6 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://desktriage:desktriage@db:5432/desktriage}
       WEBHOOK_URL: ${WEBHOOK_URL:-http://webhook:8001/notifications}
     volumes:
-      - ./models:/app/models:ro
       - ./config:/app/config:ro
     depends_on:
       db:
