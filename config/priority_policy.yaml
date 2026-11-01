@@ -1,45 +1,15 @@
-# Operational handling priority. worker/app/priority/policy.py reads this file.
+# Operational priority from the classifier priority head.
+# worker/app/priority/policy.py reads this file.
 #
-# The synthetic labels use the Cabinet Office technical incident management
-# guidance, as described in the dataset card:
-#   P1  immediate administrative deadline or material deadline risk
-#   P2  time-sensitive administrative need requiring prompt review
-#   P3  routine unresolved query
-#   P4  non-time-sensitive information request
+# Confidence is the maximum probability of the priority head.
+# At or above the threshold, the worker stores that priority.
+# Below the threshold, the worker stores the default.
 #
-# A rule may read query_text, escalation_reason, and user_id. Those are the
-# fields the intake API stores. In the labelled tickets, escalation_reason and
-# user_id do not separate P1–P4, so every rule below uses query_text only.
-#
-# First matching rule wins. Match is a case-insensitive substring of query_text.
-# Rules are ordered from the most urgent administrative deadline to the least,
-# so a query that states an immediate deadline is not downgraded by other wording.
-# A query with none of these cues has no stated deadline and is a routine
-# unresolved query.
+# The threshold uses the same validation rule as config/confidence.yaml:
+# the lowest candidate from 0.30 to 0.90 whose error among accepted
+# priority predictions is at most 0.10. On the validation users every
+# candidate qualified, so the rule keeps 0.30. At 0.30 that error is 0.027.
+# Validation priority scores were all above 0.31.
 
 default: P3
-
-rules:
-  - priority: P1
-    meaning: immediate administrative deadline or material deadline risk
-    query_text_contains_any:
-      - "within the next few hours"
-      - "deadline is today"
-
-  - priority: P2
-    meaning: time-sensitive administrative need requiring prompt review
-    query_text_contains_any:
-      - "within several days"
-      - "deadline next week"
-
-  - priority: P3
-    meaning: routine unresolved query
-    query_text_contains_any:
-      - "no immediate deadline"
-      - "normal support process"
-
-  - priority: P4
-    meaning: non-time-sensitive information request
-    query_text_contains_any:
-      - "no stated deadline"
-      - "normal backlog"
+threshold: 0.30

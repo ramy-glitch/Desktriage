@@ -1,2 +1,2 @@
-# Operational priority policy.
-# policy.py reads config/priority_policy.yaml and returns P1, P2, P3, or P4.
+# Operational priority from the classifier priority head.
+# policy.py reads config/priority_policy.yaml. Below the threshold, the priority is P3.

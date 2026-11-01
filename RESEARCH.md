@@ -16,6 +16,8 @@ I have learned the difference between polling, webhooks and cron jobs. Polling i
 
 I already know XML and Json, but this is the first time i delt with a ymal file, so i tried to understand the difference between the three. i used ymal to be maintainable as well. 
 
+I learned how to load a model and how to use it for real predictions and how can a classical ML model be integrated into a real system.
+
 
 ## Where I looked
 

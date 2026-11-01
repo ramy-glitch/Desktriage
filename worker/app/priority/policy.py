@@ -1,9 +1,11 @@
-"""Assign operational handling priority from config/priority_policy.yaml.
+"""Assign operational priority from the classifier priority head.
 
 The dataset card defines P1 to P4 as administrative handling priority.
-Return one priority value from desktriage_common.enums. The category model
-does not choose this value. The training notebook is where you check this
-policy against the labelled priorities.
+Return one priority value from desktriage_common.enums.
+
+config/priority_policy.yaml holds the confidence threshold and the default.
+Confidence is the maximum probability of the priority head. At or above the
+threshold, return that priority. Below it, return the default, which is P3.
 """
 
 import os
@@ -14,36 +16,33 @@ from pathlib import Path
 import yaml
 
 from desktriage_common.enums import Priority
+from worker.app.classifier.predict import predict
 
 _POLICY_FILENAME = "priority_policy.yaml"
 
 
 class PriorityPolicyError(ValueError):
-    """The priority policy file is missing or does not describe P1–P4 rules."""
+    """The priority policy file is missing or does not describe a threshold and default."""
 
 
 @dataclass(frozen=True)
 class _Policy:
     default: Priority
-    rules: tuple[tuple[Priority, tuple[str, ...]], ...]
+    threshold: float
 
 
-def assign_priority(query_text: str) -> Priority:
-    """Return the first matching priority, or the policy default.
-
-    A rule matches when query_text contains one of its phrases, ignoring case.
-    Rules run in the order written in the file, so an earlier deadline cue
-    wins over a later one. The current policy matches query_text only.
-    """
+def assign_priority(query_text: str, escalation_reason: str) -> Priority:
+    """Return the priority head, or the default when its confidence is below the threshold."""
     if not isinstance(query_text, str) or not query_text.strip():
         raise PriorityPolicyError("query_text must not be empty")
+    if not isinstance(escalation_reason, str) or not escalation_reason.strip():
+        raise PriorityPolicyError("escalation_reason must not be empty")
 
     policy = _load_policy(_policy_path())
-    haystack = query_text.casefold()
-    for priority, phrases in policy.rules:
-        if any(phrase in haystack for phrase in phrases):
-            return priority
-    return policy.default
+    scored = predict(query_text, escalation_reason)
+    if scored.priority_confidence < policy.threshold:
+        return policy.default
+    return scored.priority
 
 
 def _policy_path() -> Path:
@@ -61,20 +60,10 @@ def _load_policy(path: Path) -> _Policy:
         loaded = yaml.safe_load(handle)
     if not isinstance(loaded, Mapping):
         raise PriorityPolicyError("priority policy must be a mapping")
-
-    default = _as_priority(loaded.get("default"), where="default")
-    raw_rules = loaded.get("rules")
-    if not isinstance(raw_rules, list):
-        raise PriorityPolicyError("rules must be a list")
-
-    rules: list[tuple[Priority, tuple[str, ...]]] = []
-    for index, rule in enumerate(raw_rules, start=1):
-        if not isinstance(rule, Mapping):
-            raise PriorityPolicyError(f"rule {index} must be a mapping")
-        priority = _as_priority(rule.get("priority"), where=f"rule {index} priority")
-        phrases = _phrases(rule.get("query_text_contains_any"), index=index)
-        rules.append((priority, phrases))
-    return _Policy(default=default, rules=tuple(rules))
+    return _Policy(
+        default=_as_priority(loaded.get("default"), where="default"),
+        threshold=_as_threshold(loaded.get("threshold")),
+    )
 
 
 def _as_priority(value: object, *, where: str) -> Priority:
@@ -86,12 +75,10 @@ def _as_priority(value: object, *, where: str) -> Priority:
         raise PriorityPolicyError(f"{where} must be P1, P2, P3, or P4") from exc
 
 
-def _phrases(value: object, *, index: int) -> tuple[str, ...]:
-    if not isinstance(value, list) or not value:
-        raise PriorityPolicyError(f"rule {index} needs at least one query_text phrase")
-    phrases: list[str] = []
-    for item in value:
-        if not isinstance(item, str) or not item.strip():
-            raise PriorityPolicyError(f"rule {index} has an empty query_text phrase")
-        phrases.append(item.strip().casefold())
-    return tuple(phrases)
+def _as_threshold(value: object) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise PriorityPolicyError("threshold must be a number from 0 to 1")
+    threshold = float(value)
+    if not 0.0 <= threshold <= 1.0:
+        raise PriorityPolicyError("threshold must be a number from 0 to 1")
+    return threshold
