@@ -115,7 +115,7 @@ Desktriage sequence diagram reflecting the PostgreSQL container, with the classi
 
 ### Database
 
-PostgreSQL runs as the `db` service in `docker-compose.yml`. This step starts that service on its own. The worker and webhook images in the same Compose file still only copy source files. They do not install dependencies or start a process. The intake API image is the next section.
+PostgreSQL runs as the `db` service in `docker-compose.yml`. This step starts that service on its own. The intake API, the worker, and the webhook are the following sections.
 
 Docker Desktop has to be running before Compose can start the container. From the repository root:
 
@@ -220,6 +220,115 @@ and if you want to build the api image again use another terminal.
 
 Uvicorn then serves the same routes. Startup still opens a database session, so an insert or a status read reaches PostgreSQL. If the API container is already bound to port 8000, choose another port for this process.
 
+### Worker and webhook
+
+This builds the worker and the webhook and starts them with the database. The worker waits until PostgreSQL is healthy and the webhook process has started. Compose does not start the intake API.
+
+```bash
+docker compose up --build worker
+```
+
+The webhook image installs `common/requirements.txt` and `webhook/requirements.txt`, copies the shared library to `/app/desktriage_common` and the receiver to `/app/webhook`, sets `PYTHONPATH=/app`, and runs `python -m webhook.app.main`. Inside the container it listens on port 8001. `WEBHOOK_PORT` in `.env` is the port published on the host. The default is 8001. The log shows `Uvicorn running on http://0.0.0.0:8001`.
+
+The worker image installs `common/requirements.txt` and `worker/requirements.txt`, copies the shared library, the worker, and `models/` into the image, sets `PYTHONPATH=/app`, and runs `python -m worker.app.main`. Inference uses the copy of `models/classifier.keras` inside the image. `./config` is mounted at `/app/config`, so a threshold or routing change applies when the worker container starts again. A new model file is picked up only when the worker image is built again.
+
+`DATABASE_URL` and `WEBHOOK_URL` come from `.env`. On the Compose network the database host is `db` and the webhook host is `webhook`, so `WEBHOOK_URL` stays `http://webhook:8001/notifications`. The first worker build installs TensorFlow, which takes a while. A later build reuses that layer unless `worker/requirements.txt` changes.
+
+On startup the worker opens a database session and loads the classifier once. The log then shows `event=worker_started`. After that it claims one queued ticket at a time. Leave `DATABASE_URL` in `.env` pointing at `db`.
+
+To run the API as well, so a submitted ticket can be classified:
+
+```bash
+docker compose up --build api worker
+```
+
+That starts the database, the webhook, the worker, and the API. The API is published on `API_PORT`. The default is 8000.
+
+### Run the worker and webhook without building the images
+
+The worker imports `desktriage_common` and `worker`. The webhook imports `desktriage_common` and `webhook`. In the images, `PYTHONPATH=/app` makes those imports resolve. On the host, `desktriage_common` is inside `common/`, so that directory has to be on `PYTHONPATH`.
+
+Install the receiver and worker libraries into the same virtual environment used for the notebook. From the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r common\requirements.txt -r webhook\requirements.txt -r worker\requirements.txt
+```
+
+Stop the Compose processes that would bind the same ports or claim the same tickets:
+
+```powershell
+docker compose stop api worker webhook
+```
+
+Leave the database container running. In one terminal, start the receiver. It listens on port 8001, which is the published `WEBHOOK_PORT`:
+
+```powershell
+$env:PYTHONPATH = "$pwd;$pwd\common"
+.\.venv\Scripts\python.exe -m webhook.app.main
+```
+
+In a second terminal, start the worker. Point it at PostgreSQL on `127.0.0.1` and at the receiver on `127.0.0.1`. The host name `webhook` resolves only on the Compose network. Replace `<password>` with `POSTGRES_PASSWORD` from `.env`.
+
+```powershell
+$env:PYTHONPATH = "$pwd;$pwd\common"
+$env:DATABASE_URL = "postgresql+psycopg://desktriage:<password>@127.0.0.1:5432/desktriage"
+$env:WEBHOOK_URL = "http://127.0.0.1:8001/notifications"
+.\.venv\Scripts\python.exe -m worker.app.main
+```
+
+The shell variables apply to those processes only. Leave `DATABASE_URL` and `WEBHOOK_URL` in `.env` pointing at `db` and `webhook`, so the containers can keep using the Compose network. The worker reads `models/` and `config/` from the repository root. The log shows `event=worker_started` after the classifier loads.
+
+### Test a ticket through the running services
+
+These requests use the Compose ports: the API on 8000 and the webhook on 8001. The same calls work when the API, worker, and webhook are the host processes above, as long as those ports are the ones they bound. In PowerShell, call `curl.exe`. `curl` there is `Invoke-WebRequest`.
+
+Check the containers and the API:
+
+```powershell
+docker compose ps
+curl.exe http://localhost:8000/health
+```
+
+A ready API returns `{"status":"ok","database":"ok"}`.
+
+Submit a claims ticket. The worker claims the row, scores it, stores the decision, and posts it to the webhook:
+
+```powershell
+curl.exe --% -X POST http://localhost:8000/tickets -H "Content-Type: application/json" -d "{\"query_text\":\"The guidance about the submission deadline for my appeal is ambiguous. I need clarification before a documented deadline next week.\",\"escalation_reason\":\"human_requested\",\"user_id\":\"user-1\"}"
+```
+
+The response is 202, with a ticket id and the status `accepted`. Read that id back. Replace the id with the one from the 202 response:
+
+```powershell
+curl.exe http://localhost:8000/tickets/PASTE-THE-TICKET-ID
+```
+
+The first read can still be `queued` with `"decision": null` if it happens before the worker finishes. Wait a second and call it again. A finished routed ticket has status `routed`, a category, a priority, a confidence, `requires_human_review` false, and a destination such as `claims_support`.
+
+The worker and webhook logs should name that ticket:
+
+```powershell
+docker compose logs --tail 30 worker
+docker compose logs --tail 20 webhook
+```
+
+The worker log contains `event=ticket_claimed`, `event=routing_outcome`, and `event=webhook_delivered`. The webhook log contains `event=notification_received` with `duplicate=False`. When those processes are running in the host terminals, the same lines are in those terminals.
+
+The stored row matches the status response. The user and database name are `POSTGRES_USER` and `POSTGRES_DB` from `.env`:
+
+```powershell
+docker compose exec db psql -U desktriage -d desktriage -c "SELECT ticket_id, status FROM tickets ORDER BY created_at DESC LIMIT 5"
+docker compose exec db psql -U desktriage -d desktriage -c "SELECT ticket_id, category, priority, requires_human_review, destination, routing_outcome FROM triage_decisions ORDER BY decided_at DESC LIMIT 5"
+```
+
+Submit a second ticket that the classifier withholds from a team:
+
+```powershell
+curl.exe --% -X POST http://localhost:8000/tickets -H "Content-Type: application/json" -d "{\"query_text\":\"I have a policy-related question, but the available categories do not seem to describe it. I would appreciate clarification during the normal support process.\",\"escalation_reason\":\"out_of_scope\",\"user_id\":\"user-2\"}"
+```
+
+Read that second id. The finished status is `needs_human_review`, with `requires_human_review` true and `destination` null. The webhook still receives it. The decision row has `routing_outcome` `needs_human_review`.
+
 ### Classifier notebook
 
 Training runs on the host, in `training/notebooks/classifier_training.ipynb`. It is not a Compose service.
@@ -246,7 +355,7 @@ import tensorflow as tf
 model = tf.keras.models.load_model("models/classifier.keras")
 ```
 
-A raw query still has to be cleaned and encoded with `text_prep.json` and `word2idx.json` before that call. The worker is expected to do that when `worker/app/classifier/loader.py` is filled in.
+A raw query still has to be cleaned and encoded with `text_prep.json` and `word2idx.json` before that call. The worker does that when it loads the copy of `models/` inside its image.
 
 ## What I would improve with more time
 
