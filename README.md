@@ -329,6 +329,24 @@ curl.exe --% -X POST http://localhost:8000/tickets -H "Content-Type: application
 
 Read that second id. The finished status is `needs_human_review`, with `requires_human_review` true and `destination` null. The webhook still receives it. The decision row has `routing_outcome` `needs_human_review`.
 
+### Stop the stack
+
+From the repository root, this stops the API, the worker, the webhook, and the database, and removes their containers:
+
+```bash
+docker compose down
+```
+
+The `postgres_data` volume stays, so the tickets already stored are still there the next time the stack starts.
+
+To stop the containers and delete that database volume:
+
+```bash
+docker compose down -v
+```
+
+The next `docker compose up` creates an empty database and runs `db/init/001_schema.sql` again.
+
 ### Classifier notebook
 
 Training runs on the host, in `training/notebooks/classifier_training.ipynb`. It is not a Compose service.
