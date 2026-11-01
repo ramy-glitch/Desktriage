@@ -18,6 +18,14 @@ I already know XML and Json, but this is the first time i delt with a ymal file,
 
 I learned how to load a model and how to use it for real predictions and how can a classical ML model be integrated into a real system.
 
+I also remembered how we used to do networking in distributed systems ( The intake API and the worker are both clients of PostgreSQL. The AI assistant is the client of the intake API, and the API is the server for that assistant.
+
+The assistant sends the escalated ticket to the intake route. The API validates it and inserts a queued row. The assistant then keeps calling the status route with the ticket id. Both of those routes are served by the same FastAPI process.
+
+The worker never receives that HTTP call. It reads and updates the same PostgreSQL rows: claim the queued ticket, run inference, store the decision. The assistant’s next status call reads that decision back through the API.
+
+One more client relationship sits beside those two. After the decision is stored, the worker is an HTTP client of the webhook receiver. It posts the outcome to WEBHOOK_URL. The webhook process is the server for that notification).
+
 
 ## Where I looked
 
