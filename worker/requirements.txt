@@ -1,11 +1,16 @@
 # Dependencies for the worker, in addition to common/requirements.txt.
-# Include the same model library the training notebook uses to export the classifier.
-#
-# httpx
-# tensorflow
-# The notebook exports a Keras model. Install TensorFlow here when loader.py loads it.
+# That file supplies pydantic, pydantic-settings, sqlalchemy, and psycopg.
 # Comet stays in the training environment and is not imported by this image.
 
-# PyYAML: the worker reads config/priority_policy.yaml, config/routing_rules.yaml,
+# httpx: POST the stored decision to WEBHOOK_URL.
+httpx==0.28.1
+
+# PyYAML: read config/priority_policy.yaml, config/routing_rules.yaml,
 # and config/confidence.yaml.
 PyYAML==6.0.3
+
+# numpy: encode a ticket into the padded sequence the classifier expects.
+numpy==2.5.4
+
+# tensorflow: load classifier.keras with the same library the notebook used to save it.
+tensorflow==2.21.0
