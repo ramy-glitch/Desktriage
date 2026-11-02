@@ -26,7 +26,7 @@ The worker never receives that HTTP call. It reads and updates the same PostgreS
 
 One more client relationship sits beside those two. After the decision is stored, the worker is an HTTP client of the webhook receiver. It posts the outcome to WEBHOOK_URL. The webhook process is the server for that notification).
 
-I gained an in depth knowledge of docker. The co
+I gained an in depth knowledge of docker. I even learned how to publish images. i fimilarised myself with the commands, the terminology, the files and so on. My knowledge in how operating systems work has helped immensely.
 
 ## Where I looked
 

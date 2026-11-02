@@ -1,0 +1,43 @@
+services:
+  db:
+    image: aimenrami/desktriage-db:1.0
+    environment:
+      POSTGRES_USER: desktriage
+      POSTGRES_PASSWORD: desktriage
+      POSTGRES_DB: desktriage
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U desktriage -d desktriage"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: aimenrami/desktriage-api:1.0
+    environment:
+      DATABASE_URL: postgresql+psycopg://desktriage:desktriage@db:5432/desktriage
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  webhook:
+    image: aimenrami/desktriage-webhook:1.0
+    ports:
+      - "8001:8001"
+
+  worker:
+    image: aimenrami/desktriage-worker:1.0
+    environment:
+      DATABASE_URL: postgresql+psycopg://desktriage:desktriage@db:5432/desktriage
+      WEBHOOK_URL: http://webhook:8001/notifications
+    depends_on:
+      db:
+        condition: service_healthy
+      webhook:
+        condition: service_started
+
+volumes:
+  postgres_data:

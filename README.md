@@ -117,6 +117,25 @@ Ticket field flow for the same path. It shows the values each step writes, from 
 
 ## How to run it
 
+### Get the project
+
+Install [Docker Desktop](https://docs.docker.com/get-docker/) and [Git](https://git-scm.com/downloads). Docker Desktop includes Docker Compose. Start Docker Desktop and wait until it reports that the engine is running. The later Compose commands fail while Docker is stopped.
+
+Clone the repository and move into it. The following commands expect this folder to be the current directory:
+
+```bash
+git clone https://github.com/ramy-glitch/Desktriage.git
+cd Desktriage
+```
+
+Copy `.env.example` to `.env`. Compose reads that file for the database name, the ports, and `DATABASE_URL`. The example values are enough to run the stack on one machine.
+
+```bash
+cp .env.example .env
+```
+
+On PowerShell, the copy is `Copy-Item .env.example .env`.
+
 ### Database
 
 PostgreSQL runs as the `db` service in `docker-compose.yml`. This step starts that service on its own. The intake API, the worker, and the webhook are the following sections.
@@ -247,6 +266,53 @@ docker compose up --build api worker
 ```
 
 That starts the database, the webhook, the worker, and the API. The API is published on `API_PORT`. The default is 8000.
+
+### Run the published images
+
+The same four processes are published on Docker Hub, so they can be pulled and started without a local build. `docker-compose.hub.yml` names the images. Tag `1.0` is the published version.
+
+| Service | Image |
+| --- | --- |
+| Database | `aimenrami/desktriage-db:1.0` |
+| Intake API | `aimenrami/desktriage-api:1.0` |
+| Webhook | `aimenrami/desktriage-webhook:1.0` |
+| Worker | `aimenrami/desktriage-worker:1.0` |
+
+The database image is PostgreSQL 16 plus `db/init/001_schema.sql`. The worker image contains `models/` and `config/`. This file does not mount `./db/init` or `./config`, and it does not build from the Dockerfiles.
+
+Docker Desktop has to be running. From the repository root, stop a stack that is already using ports 8000 and 8001:
+
+```powershell
+docker compose down
+```
+
+`docker compose down` does not delete `postgres_data`. Pull the four images, then start them:
+
+```powershell
+docker compose -f docker-compose.hub.yml pull
+docker compose -f docker-compose.hub.yml up
+```
+
+`pull` downloads `aimenrami/desktriage-db:1.0`, `aimenrami/desktriage-api:1.0`, `aimenrami/desktriage-webhook:1.0`, and `aimenrami/desktriage-worker:1.0`. `up` creates the containers. The worker waits until PostgreSQL is healthy and the webhook process has started.
+
+On the first start of an empty `postgres_data` volume, the database image creates the role and database from `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` in `docker-compose.hub.yml`, then runs the schema that was copied into the image. A volume that already has tables is opened as it is. The script does not run again.
+
+The API listens on port 8000 and the webhook on port 8001. `DATABASE_URL` in this file uses the host `db`, and `WEBHOOK_URL` is `http://webhook:8001/notifications`. The worker log shows `event=worker_started` after it loads the classifier from the image.
+
+The ticket checks in the next section are the same. For this file, add `-f docker-compose.hub.yml` to `docker compose ps`, `docker compose logs`, and `docker compose exec`.
+
+```powershell
+docker compose -f docker-compose.hub.yml ps
+docker compose -f docker-compose.hub.yml logs --tail 30 worker
+```
+
+Stop these containers with:
+
+```powershell
+docker compose -f docker-compose.hub.yml down
+```
+
+That keeps `postgres_data`. Add `-v` only when you want the next start to create an empty database again.
 
 ### Run the worker and webhook without building the images
 
