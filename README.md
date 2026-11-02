@@ -461,7 +461,7 @@ With more time, I would train the classifier on real support tickets so the cate
 
 I would like to integrate the system with deskline and test it as whole and run some E2E tests.
 
-I have used cursor to write the tests but i haven't verified or run them yet, i would like to do that later.
+I have used cursor to write the tests but i haven't verified or run them yet, i would like to do that later. However I tested the whole system manually and component by component.
 
 After i run the tests and verify that everything is working right by checking the logs and rechecking the whole system behaviour, i want to publish the images to Dockerhub for easy download. 
 
