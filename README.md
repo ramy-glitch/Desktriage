@@ -219,7 +219,7 @@ docker compose exec db psql -U desktriage -d desktriage -c "SELECT ticket_id, st
 
 The user and database name are the `POSTGRES_USER` and `POSTGRES_DB` values from `.env`.
 
-### Run Uvicorn without building the image
+### Run Uvicorn without building the image (for developmment/testing)
 
 The API imports `desktriage_common` and `api` as top-level packages. In the image, both directories sit directly under `/app`, and `PYTHONPATH=/app` makes those imports resolve. In the repository, `desktriage_common` is inside `common/`. A process started from the repository root can import `api` and cannot import `desktriage_common` until `common` is on `PYTHONPATH`.
 
@@ -266,6 +266,40 @@ docker compose up --build api worker
 ```
 
 That starts the database, the webhook, the worker, and the API. The API is published on `API_PORT`. The default is 8000.
+
+### Run the worker and webhook without building the images (for developmment/testing)
+
+The worker imports `desktriage_common` and `worker`. The webhook imports `desktriage_common` and `webhook`. In the images, `PYTHONPATH=/app` makes those imports resolve. On the host, `desktriage_common` is inside `common/`, so that directory has to be on `PYTHONPATH`.
+
+Install the receiver and worker libraries into the same virtual environment used for the notebook. From the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r common\requirements.txt -r webhook\requirements.txt -r worker\requirements.txt
+```
+
+Stop the Compose processes that would bind the same ports or claim the same tickets:
+
+```powershell
+docker compose stop api worker webhook
+```
+
+Leave the database container running. In one terminal, start the receiver. It listens on port 8001, which is the published `WEBHOOK_PORT`:
+
+```powershell
+$env:PYTHONPATH = "$pwd;$pwd\common"
+.\.venv\Scripts\python.exe -m webhook.app.main
+```
+
+In a second terminal, start the worker. Point it at PostgreSQL on `127.0.0.1` and at the receiver on `127.0.0.1`. The host name `webhook` resolves only on the Compose network. Replace `<password>` with `POSTGRES_PASSWORD` from `.env`.
+
+```powershell
+$env:PYTHONPATH = "$pwd;$pwd\common"
+$env:DATABASE_URL = "postgresql+psycopg://desktriage:<password>@127.0.0.1:5432/desktriage"
+$env:WEBHOOK_URL = "http://127.0.0.1:8001/notifications"
+.\.venv\Scripts\python.exe -m worker.app.main
+```
+
+The shell variables apply to those processes only. Leave `DATABASE_URL` and `WEBHOOK_URL` in `.env` pointing at `db` and `webhook`, so the containers can keep using the Compose network. The worker reads `models/` and `config/` from the repository root. The log shows `event=worker_started` after the classifier loads.
 
 ### Run the published images
 
@@ -314,39 +348,7 @@ docker compose -f docker-compose.hub.yml down
 
 That keeps `postgres_data`. Add `-v` only when you want the next start to create an empty database again.
 
-### Run the worker and webhook without building the images
 
-The worker imports `desktriage_common` and `worker`. The webhook imports `desktriage_common` and `webhook`. In the images, `PYTHONPATH=/app` makes those imports resolve. On the host, `desktriage_common` is inside `common/`, so that directory has to be on `PYTHONPATH`.
-
-Install the receiver and worker libraries into the same virtual environment used for the notebook. From the repository root:
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r common\requirements.txt -r webhook\requirements.txt -r worker\requirements.txt
-```
-
-Stop the Compose processes that would bind the same ports or claim the same tickets:
-
-```powershell
-docker compose stop api worker webhook
-```
-
-Leave the database container running. In one terminal, start the receiver. It listens on port 8001, which is the published `WEBHOOK_PORT`:
-
-```powershell
-$env:PYTHONPATH = "$pwd;$pwd\common"
-.\.venv\Scripts\python.exe -m webhook.app.main
-```
-
-In a second terminal, start the worker. Point it at PostgreSQL on `127.0.0.1` and at the receiver on `127.0.0.1`. The host name `webhook` resolves only on the Compose network. Replace `<password>` with `POSTGRES_PASSWORD` from `.env`.
-
-```powershell
-$env:PYTHONPATH = "$pwd;$pwd\common"
-$env:DATABASE_URL = "postgresql+psycopg://desktriage:<password>@127.0.0.1:5432/desktriage"
-$env:WEBHOOK_URL = "http://127.0.0.1:8001/notifications"
-.\.venv\Scripts\python.exe -m worker.app.main
-```
-
-The shell variables apply to those processes only. Leave `DATABASE_URL` and `WEBHOOK_URL` in `.env` pointing at `db` and `webhook`, so the containers can keep using the Compose network. The worker reads `models/` and `config/` from the repository root. The log shows `event=worker_started` after the classifier loads.
 
 ### Test a ticket through the running services
 
