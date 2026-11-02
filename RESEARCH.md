@@ -1,6 +1,6 @@
 # Research
 
-## What I needed to learn
+## What I needed to learn or learned
 
 I needed to learn about webhooks and how they are different from cron jobs and REST API, i also needed to learn how to implement one.
 
@@ -26,6 +26,7 @@ The worker never receives that HTTP call. It reads and updates the same PostgreS
 
 One more client relationship sits beside those two. After the decision is stored, the worker is an HTTP client of the webhook receiver. It posts the outcome to WEBHOOK_URL. The webhook process is the server for that notification).
 
+I gained an in depth knowledge of docker. The co
 
 ## Where I looked
 
@@ -43,10 +44,15 @@ polling vs cron vs webhooks: https://chatgpt.com/share/6ae33cd1-3c14-83ed-b1e6-a
 
 ## How I judged it
 
+I always try to understand the user needs, define the scope and then design the system architecture as a whole before writing a single line of code, and i run thought experiments using my knoweledge to first imagine the modes of failures and whether a component is really necessary for the system, i try to find the minimal design or solution possible before coding anything. I use diagrams to keep everything clear and keep track of my design solutions.
 
+I used AI (cursor) to help me with the coding phase, that is why i was able to deliver many functionalities of this project, but my approach was i tell it what to write in each code file as components and then read the code closely and try to make sure it satisfies its purpose and i reflect on the code as a whole how that specific piece of code will affect the entirety of that component that i am building. 
 
 ## What failed
 
-## What I learned
+Well, my approach changed several times while I was building this project. One of those changes was priority. At first I assigned it by matching strings in the ticket text. I dropped that and predicted priority as well, with a second head on the classifier.
 
+The other recurring problem was Python import paths, because the Docker image and a process started from the repository do not see the packages in the same place. In the image, desktriage_common sits directly under /app, next to the API or the worker. In the repository, that package lives inside the common/ folder, so a local process cannot import it until common is on PYTHONPATH.
+
+I kept common as its own folder. When I ran a component locally without its image, I changed only the environment variables for that process: PYTHONPATH, so the imports resolve, and DATABASE_URL, so it reaches PostgreSQL on 127.0.0.1 instead of the Compose host name db. I am not sure that was the best way to support both layouts. (feedback please hhh).
 

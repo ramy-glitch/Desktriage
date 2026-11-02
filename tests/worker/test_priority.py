@@ -59,3 +59,60 @@ def test_confidence_below_the_threshold_is_p3(
 def test_blank_text_is_rejected(query_text: str, escalation_reason: str) -> None:
     with pytest.raises(PriorityPolicyError):
         assign_priority(query_text, escalation_reason)
+
+
+def test_the_default_and_threshold_come_from_the_policy_file(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "priority_policy.yaml").write_text(
+        "default: P4\nthreshold: 0.5\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CONFIG_DIR", str(tmp_path))
+    monkeypatch.setattr(
+        "worker.app.priority.policy.predict",
+        lambda query_text, escalation_reason: _scored(Priority.P1, 0.5),
+    )
+    assert assign_priority("a query", "a reason") is Priority.P1
+
+    monkeypatch.setattr(
+        "worker.app.priority.policy.predict",
+        lambda query_text, escalation_reason: _scored(Priority.P1, 0.49),
+    )
+    assert assign_priority("a query", "a reason") is Priority.P4
+
+
+def test_a_missing_policy_file_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setenv("CONFIG_DIR", str(tmp_path))
+    with pytest.raises(PriorityPolicyError, match="not found"):
+        assign_priority("a query", "a reason")
+
+
+def test_an_unknown_default_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "priority_policy.yaml").write_text(
+        "default: urgent\nthreshold: 0.5\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CONFIG_DIR", str(tmp_path))
+    with pytest.raises(PriorityPolicyError, match="default"):
+        assign_priority("a query", "a reason")
+
+
+def test_a_boolean_threshold_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "priority_policy.yaml").write_text(
+        "default: P3\nthreshold: true\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CONFIG_DIR", str(tmp_path))
+    with pytest.raises(PriorityPolicyError, match="threshold"):
+        assign_priority("a query", "a reason")

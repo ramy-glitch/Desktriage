@@ -111,6 +111,10 @@ Desktriage sequence diagram reflecting the PostgreSQL container, with the classi
 
 ![Desktriage sequence diagram reflecting the PostgreSQL container, with the classifier running inside the background worker and the webhook receiver handling notifications.](docs/sequence-diagram.png)
 
+Ticket field flow for the same path. It shows the values each step writes, from the queued row to the decision the status route returns.
+
+![Ticket field flow. Intake writes the queued row. The worker fills the scores, the priority, the routing gate, the team, and one decision. The status route returns that decision only when the ticket is routed or needs human review. A failed attempt returns the row to queued, or marks it failed after the attempt limit.](docs/ticket-field-flow.png)
+
 ## How to run it
 
 ### Database
@@ -387,7 +391,15 @@ A raw query still has to be cleaned and encoded with `text_prep.json` and `word2
 
 With more time, I would train the classifier on real support tickets so the categories and priorities reflect the requests staff actually receive. I would also try other models and run statistical tests on the results. The current scores come from synthetic data. I started with a smaller model instead of a large language model, because training would use less computing power and need fewer resources during inference.
 
+I would like to integrate the system with deskline and test it as whole and run some E2E tests.
 
+I have used cursor to write the tests but i haven't verified or run them yet, i would like to do that later.
+
+After i run the tests and verify that everything is working right by checking the logs and rechecking the whole system behaviour, i want to publish the images to Dockerhub for easy download. 
+
+I am not a security expert, i only studied how to use openssl create keys (symmetric encryption, asymmetric encryption ) and establish connections and data transfers on linux, so i don't know much about that (if you can give me some feedback about that, please do). so improving security is one other aspect, although in the code i stored the text coming from the user query as data so SQL injections are impossible here.
+
+I want to learn about github actions for CI/CD and use that as well to test the whole workflow. 
 
 
 

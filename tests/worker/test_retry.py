@@ -115,3 +115,55 @@ def test_a_missing_ticket_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
 
     with pytest.raises(RetryError):
         schedule_retry(_ticket(1), RuntimeError("classifier unavailable"))
+
+
+def test_a_blank_ticket_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _Session({"ticket_id": "ticket-1"})
+    _patch(monkeypatch, session)
+    ticket = ClaimedTicket(
+        ticket_id=" ",
+        user_id="user-1",
+        query_text="where is my claim",
+        escalation_reason="conflicting_evidence",
+        attempt=1,
+    )
+
+    with pytest.raises(RetryError, match="ticket_id"):
+        schedule_retry(ticket, RuntimeError("classifier unavailable"))
+
+    assert session.calls == []
+
+
+def test_attempt_must_be_a_positive_integer(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _Session({"ticket_id": "ticket-1"})
+    _patch(monkeypatch, session)
+
+    for attempt in (0, -1, True):
+        with pytest.raises(RetryError, match="attempt"):
+            schedule_retry(_ticket(attempt), RuntimeError("classifier unavailable"))
+
+    assert session.calls == []
+
+
+def test_retry_needs_an_exception(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _Session({"ticket_id": "ticket-1"})
+    _patch(monkeypatch, session)
+
+    with pytest.raises(RetryError, match="failure"):
+        schedule_retry(_ticket(1), BaseException("stop"))
+
+    assert session.calls == []
+
+
+def test_an_attempt_past_the_limit_marks_the_ticket_failed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = _Session({"ticket_id": "ticket-1"})
+    _patch(monkeypatch, session)
+
+    plan = schedule_retry(_ticket(4), RuntimeError("classifier unavailable"))
+
+    assert plan.status is Status.FAILED
+    assert plan.attempt == 4
+    assert plan.delay_seconds is None
+    assert session.calls[0][1]["status"] == "failed"

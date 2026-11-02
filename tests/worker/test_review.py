@@ -38,3 +38,26 @@ def test_unknown_category_is_rejected() -> None:
 def test_confidence_outside_zero_to_one_is_rejected() -> None:
     with pytest.raises(ReviewQueueError):
         hold_for_review(Category.ACCESS_AND_REFERRALS, Priority.P4, 1.1)
+
+
+def test_confidence_of_one_is_kept() -> None:
+    review = hold_for_review(Category.ACCESS_AND_REFERRALS, " P4 ", 1)
+    assert review.priority is Priority.P4
+    assert review.confidence == 1.0
+    assert review.requires_human_review is True
+    assert review.destination is None
+
+
+def test_a_boolean_confidence_is_rejected() -> None:
+    with pytest.raises(ReviewQueueError):
+        hold_for_review(Category.ACCESS_AND_REFERRALS, Priority.P4, True)
+
+
+def test_an_unknown_priority_is_rejected() -> None:
+    with pytest.raises(ReviewQueueError):
+        hold_for_review(Category.ACCESS_AND_REFERRALS, "p4", 0.4)
+
+
+def test_a_negative_confidence_is_rejected() -> None:
+    with pytest.raises(ReviewQueueError):
+        hold_for_review(Category.ACCESS_AND_REFERRALS, Priority.P4, -0.01)

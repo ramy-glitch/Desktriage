@@ -25,3 +25,6 @@ I reflect on the AI suggestions and how it could fail.
 Here you can find my conversation with claude discussing the system architecture: https://claude.ai/share/b641ee25-f33e-4c0f-a19a-d29169cf4e80
 
 more system architecture discussion: https://chatgpt.com/share/6ae1e1bf-4950-83ed-a310-7f597e3336c7
+
+
+I used AI (cursor) to help me with the coding phase, that is why i was able to deliver many functionalities of this project, but my approach was i tell it what to write in each code file as components and then read the code closely and try to make sure it satisfies its purpose and i reflect on the code as a whole how that specific piece of code will affect the entirety of that component that i am building. 

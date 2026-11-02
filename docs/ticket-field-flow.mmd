@@ -1,0 +1,73 @@
+%%{init: {'flowchart': {'wrappingWidth': 460, 'padding': 14, 'nodeSpacing': 26, 'rankSpacing': 32, 'htmlLabels': true}, 'theme': 'default'}}%%
+flowchart TD
+  subgraph intake ["1. Intake creates the row"]
+    direction TB
+    body["Assistant sends query_text, escalation_reason, user_id"]
+    id["API creates ticket_id"]
+    row["tickets row: those three texts, status = queued, attempt_count = 0"]
+    reply["Response status = accepted. No category, priority, or team"]
+    body --> id --> row --> reply
+  end
+
+  subgraph claim ["2. Claim changes status"]
+    direction TB
+    pick["Select one queued row whose next_attempt_at is empty or due"]
+    processing["status = processing, attempt_count + 1, claimed_at set, next_attempt_at cleared"]
+    pick --> processing
+  end
+
+  subgraph score ["3. The two heads create the scores"]
+    direction TB
+    text["query_text and escalation_reason"]
+    heads["predict: category, category confidence, priority, priority confidence"]
+    version["loader creates model_version: SHA-256 of classifier.keras, once per process. Step 7 stores it"]
+    text --> heads
+    heads -.-> version
+  end
+
+  subgraph priority ["4. Priority may be replaced"]
+    direction TB
+    pcheck{"priority confidence >= 0.30?"}
+    keep["priority stays the head's P1, P2, P3, or P4"]
+    fallback["priority becomes default P3"]
+    pcheck -->|yes| keep
+    pcheck -->|no| fallback
+  end
+
+  subgraph gate ["5. Gate reads both confidences"]
+    direction TB
+    gcheck{"category confidence >= 0.30 OR priority confidence >= 0.30?"}
+    reviewFlag["allow_routing = false"]
+    routeFlag["allow_routing = true"]
+    gcheck -->|neither| reviewFlag
+    gcheck -->|either| routeFlag
+  end
+
+  subgraph dest ["6. Category selects the team"]
+    direction TB
+    routeQ{"allow_routing?"}
+    listed{"category is other_or_unknown?"}
+    team["destination = enrollment_support, benefits_support, claims_support, financial_assistance_support, access_support, or policy_specialist"]
+    noTeam["destination stays empty"]
+    routeQ -->|no| noTeam
+    routeQ -->|yes| listed
+    listed -->|no| team
+    listed -->|yes| noTeam
+  end
+
+  subgraph store ["7. The worker writes one decision"]
+    direction TB
+    routed["When a team was chosen: status = routed, routing_outcome = routed, requires_human_review = false"]
+    held["When destination stays empty: status = needs_human_review, routing_outcome = needs_human_review, requires_human_review = true"]
+    decision["One triage_decisions row: category, priority, confidence, requires_human_review, destination, routing_outcome, model_version"]
+    routed --> decision
+    held --> decision
+  end
+
+  subgraph later ["8. Read back, or a failed attempt"]
+    direction LR
+    status["GET /tickets/id returns the decision only when status is routed or needs_human_review"]
+    retry["On failure, retry sets next_attempt_at and returns status to queued, so step 2 can claim it again, or status = failed after the attempt limit"]
+  end
+
+  intake --> claim --> score --> priority --> gate --> dest --> store --> later

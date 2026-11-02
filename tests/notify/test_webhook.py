@@ -238,3 +238,82 @@ def test_a_missing_webhook_url_does_not_post(monkeypatch: pytest.MonkeyPatch) ->
         notify(_stored())
 
     assert posts == []
+
+
+def test_a_boolean_decision_id_is_rejected() -> None:
+    with pytest.raises(IdempotencyError):
+        decision_key("ticket-1", True)
+    with pytest.raises(IdempotencyError):
+        decision_key("ticket-1", -3)
+
+
+def test_a_connection_error_is_recorded(monkeypatch: pytest.MonkeyPatch) -> None:
+    store = _Store()
+
+    def post(
+        url: str,
+        *,
+        json: Mapping[str, object],
+        headers: Mapping[str, str],
+        timeout: float,
+    ) -> _Response:
+        raise httpx.ConnectError("connection refused")
+
+    _install(monkeypatch, store, post)
+
+    with pytest.raises(NotifyError, match="connection failed"):
+        notify(_stored())
+
+    assert store.writes == [
+        {
+            "ticket_id": "ticket-1",
+            "idempotency_key": "ticket-1:10",
+            "attempt_number": 1,
+            "response_status": None,
+            "error_text": "connection failed",
+        }
+    ]
+
+
+def test_a_missing_decision_does_not_post(monkeypatch: pytest.MonkeyPatch) -> None:
+    store = _Store(decision_id=None)
+    posts: list[int] = []
+
+    def post(
+        url: str,
+        *,
+        json: Mapping[str, object],
+        headers: Mapping[str, str],
+        timeout: float,
+    ) -> _Response:
+        posts.append(1)
+        return _Response(200)
+
+    _install(monkeypatch, store, post)
+
+    with pytest.raises(NotifyError, match="no stored decision"):
+        notify(_stored())
+
+    assert posts == []
+    assert store.writes == []
+
+
+def test_a_redirect_is_a_failed_delivery(monkeypatch: pytest.MonkeyPatch) -> None:
+    store = _Store()
+
+    def post(
+        url: str,
+        *,
+        json: Mapping[str, object],
+        headers: Mapping[str, str],
+        timeout: float,
+    ) -> _Response:
+        return _Response(302)
+
+    _install(monkeypatch, store, post)
+
+    with pytest.raises(NotifyError, match="webhook returned 302"):
+        notify(_stored())
+
+    assert store.writes[0]["response_status"] == 302
+    assert store.writes[0]["error_text"] == "webhook returned 302"

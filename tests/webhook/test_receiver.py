@@ -89,3 +89,33 @@ def test_a_malformed_notification_is_rejected(client: TestClient) -> None:
     response = client.post("/notifications", json={"ticket_id": "ticket-1"})
 
     assert response.status_code == 422
+
+
+def test_a_status_that_does_not_match_the_decision_is_rejected(client: TestClient) -> None:
+    body = _body()
+    body["status"] = Status.NEEDS_HUMAN_REVIEW.value
+
+    response = client.post("/notifications", json=body)
+
+    assert response.status_code == 422
+
+
+def test_a_review_decision_with_a_team_is_rejected(client: TestClient) -> None:
+    body = _body(destination=None)
+    body["decision"]["destination"] = "claims_support"
+    body["decision"]["requires_human_review"] = True
+
+    response = client.post("/notifications", json=body)
+
+    assert response.status_code == 422
+
+
+def test_a_header_with_surrounding_space_matches(client: TestClient) -> None:
+    response = client.post(
+        "/notifications",
+        json=_body(),
+        headers={"Idempotency-Key": "  ticket-1:10  "},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["duplicate"] is False

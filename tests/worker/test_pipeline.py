@@ -173,3 +173,71 @@ def test_a_failure_is_handed_to_retry_once(monkeypatch: pytest.MonkeyPatch) -> N
     assert seen["stored"] == []
     assert seen["notified"] == []
     assert seen["retried"] == [(ticket, failure)]
+
+
+def _thresholds() -> tuple[float, float]:
+    from pathlib import Path
+
+    import yaml
+
+    config = Path(__file__).resolve().parents[2] / "config"
+    category = yaml.safe_load((config / "confidence.yaml").read_text(encoding="utf-8"))
+    priority = yaml.safe_load((config / "priority_policy.yaml").read_text(encoding="utf-8"))
+    return float(category["threshold"]), float(priority["threshold"])
+
+
+def test_a_category_score_at_the_threshold_routes(monkeypatch: pytest.MonkeyPatch) -> None:
+    category_threshold, priority_threshold = _thresholds()
+    assert category_threshold > 0
+    assert priority_threshold > 0
+    seen = _install(
+        monkeypatch,
+        _scored(Category.CLAIMS_AND_APPEALS, category_threshold, 0.0),
+        Priority.P3,
+    )
+
+    stored = process_ticket(_ticket())
+
+    assert stored is not None
+    assert stored.status is Status.ROUTED
+    assert stored.decision.destination == "claims_support"
+    assert seen["teams"] == [(Category.CLAIMS_AND_APPEALS, Priority.P3)]
+
+
+def test_a_priority_score_at_the_threshold_routes(monkeypatch: pytest.MonkeyPatch) -> None:
+    _category_threshold, priority_threshold = _thresholds()
+    seen = _install(
+        monkeypatch,
+        _scored(Category.CLAIMS_AND_APPEALS, 0.0, priority_threshold),
+        Priority.P2,
+    )
+
+    stored = process_ticket(_ticket())
+
+    assert stored is not None
+    assert stored.decision.destination == "claims_support"
+    assert seen["teams"] == [(Category.CLAIMS_AND_APPEALS, Priority.P2)]
+
+
+def test_a_notification_failure_is_handed_to_retry_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from worker.app.notify.webhook import NotifyError
+
+    seen = _install(
+        monkeypatch,
+        _scored(Category.CLAIMS_AND_APPEALS, 0.90, 0.90),
+        Priority.P2,
+    )
+    failure = NotifyError("timeout")
+
+    def fail(stored: StoredDecision) -> None:
+        raise failure
+
+    monkeypatch.setattr("worker.app.pipeline._notify", fail)
+    ticket = _ticket()
+
+    assert process_ticket(ticket) is None
+    assert len(seen["stored"]) == 1
+    assert seen["notified"] == []
+    assert seen["retried"] == [(ticket, failure)]

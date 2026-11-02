@@ -3,6 +3,7 @@
 # The status read can reconstruct the outcome from that record.
 
 from collections.abc import Mapping
+from typing import cast
 
 import pytest
 
@@ -145,6 +146,74 @@ def test_review_with_a_destination_is_rejected(monkeypatch: pytest.MonkeyPatch) 
             confidence=0.4,
             requires_human_review=True,
             destination="policy_specialist",
+        )
+
+    assert session.calls == []
+
+
+def test_a_blank_ticket_is_not_written(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _Session({"ticket_id": "ticket-1"})
+    _patch_store(monkeypatch, session)
+
+    with pytest.raises(TraceError, match="ticket_id"):
+        record_decision(
+            " ",
+            category=Category.CLAIMS_AND_APPEALS,
+            priority=Priority.P3,
+            confidence=0.5,
+            requires_human_review=False,
+            destination="claims_support",
+        )
+
+    assert session.calls == []
+
+
+def test_the_review_flag_must_be_boolean(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _Session({"ticket_id": "ticket-1"})
+    _patch_store(monkeypatch, session)
+
+    with pytest.raises(TraceError, match="requires_human_review"):
+        record_decision(
+            "ticket-1",
+            category=Category.CLAIMS_AND_APPEALS,
+            priority=Priority.P3,
+            confidence=0.5,
+            requires_human_review=cast(bool, 1),
+            destination="claims_support",
+        )
+
+    assert session.calls == []
+
+
+def test_a_routed_decision_needs_a_destination(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _Session({"ticket_id": "ticket-1"})
+    _patch_store(monkeypatch, session)
+
+    with pytest.raises(TraceError, match="does not match"):
+        record_decision(
+            "ticket-1",
+            category=Category.CLAIMS_AND_APPEALS,
+            priority=Priority.P2,
+            confidence=0.9,
+            requires_human_review=False,
+            destination=None,
+        )
+
+    assert session.calls == []
+
+
+def test_confidence_outside_zero_to_one_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _Session({"ticket_id": "ticket-1"})
+    _patch_store(monkeypatch, session)
+
+    with pytest.raises(TraceError, match="does not match"):
+        record_decision(
+            "ticket-1",
+            category=Category.ACCESS_AND_REFERRALS,
+            priority=Priority.P4,
+            confidence=1.1,
+            requires_human_review=False,
+            destination="access_support",
         )
 
     assert session.calls == []

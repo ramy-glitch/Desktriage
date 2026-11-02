@@ -39,6 +39,7 @@ def test_startup_loads_the_model_once_and_then_polls(monkeypatch: pytest.MonkeyP
 
 def test_a_database_failure_stops_startup(monkeypatch: pytest.MonkeyPatch) -> None:
     order: list[str] = []
+    logged: list[str] = []
 
     def fail() -> None:
         raise ConnectionError("postgresql://user:secret@db:5432/desktriage")
@@ -48,15 +49,22 @@ def test_a_database_failure_stops_startup(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setattr("worker.app.main.load_classifier", lambda: order.append("model"))
     monkeypatch.setattr("worker.app.main.run", lambda **kwargs: order.append("loop"))
     monkeypatch.setattr("worker.app.main.signal.signal", lambda signum, handler: None)
+    monkeypatch.setattr(
+        "worker.app.main.logger.error",
+        lambda message, *args: logged.append(message % args if args else message),
+    )
 
     with pytest.raises(ConnectionError):
         main()
 
     assert order == ["settings"]
+    assert logged == ["event=startup_failure error_type=ConnectionError"]
+    assert "secret" not in logged[0]
 
 
 def test_a_model_failure_stops_startup(monkeypatch: pytest.MonkeyPatch) -> None:
     order: list[str] = []
+    logged: list[str] = []
 
     def fail() -> None:
         raise RuntimeError("model file missing")
@@ -66,8 +74,14 @@ def test_a_model_failure_stops_startup(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("worker.app.main.load_classifier", fail)
     monkeypatch.setattr("worker.app.main.run", lambda **kwargs: order.append("loop"))
     monkeypatch.setattr("worker.app.main.signal.signal", lambda signum, handler: None)
+    monkeypatch.setattr(
+        "worker.app.main.logger.error",
+        lambda message, *args: logged.append(message % args if args else message),
+    )
 
     with pytest.raises(RuntimeError):
         main()
 
     assert order == ["settings", "database"]
+    assert logged == ["event=startup_failure error_type=RuntimeError"]
+    assert "model file missing" not in logged[0]
